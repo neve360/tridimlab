@@ -7,12 +7,11 @@ Encapsulated View support for the scanning progress meter.
 
 // Should not depend on the data model, but driven from functional state passed into it.
 
-import Foundation
-import SwiftUI
 import RealityKit
+import SwiftUI
 
 struct ProgressBarView: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     // The progress value from 0 to 1 that describes the amount of coverage completed.
     var progress: Float
     var estimatedRemainingTime: TimeInterval?

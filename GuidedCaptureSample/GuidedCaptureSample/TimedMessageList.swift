@@ -2,13 +2,10 @@
 See the LICENSE.txt file for this sample’s licensing information.
 
 Abstract:
-A timed FIFO of messages that conforms to `ObservableObject` and modifies published
- properties `withAnimation` for use as a ground truth source of data for a SwiftUI View.
+A timed, observable FIFO of messages and modifies property `withAnimation` for use as a ground truth
+ source of data for a SwiftUI View.
 */
 
-import Combine
-import Dispatch
-import Foundation
 import SwiftUI
 import os
 
@@ -17,9 +14,10 @@ private let logger = Logger(subsystem: GuidedCaptureSampleApp.subsystem,
 
 /// Use a `TimedMessageList` to add a message to a FIFO for display with some minimum duration. The time can be extended
 /// if it gets refreshed. This object will automatically remove items whose timer has expired.
-/// Because this is an `ObservableObject` and the message list is `@Published`, SwiftUI can use it to directly update a `View`.
+/// Because this is `Observable`, SwiftUI can use it to directly update a `View`.
 /// The changes to `messages` are done inside `withAnimation` to allow transitions as well.
-class TimedMessageList: ObservableObject {
+@Observable
+class TimedMessageList {
     // A `Message` is unique at creation, with identity separate from its actual message string and
     // ending time so that SwiftUI has a consistent identity for animation purposes when time changes.
     // Not tying the identity to the string means the app can duplicate messages in the
@@ -47,7 +45,7 @@ class TimedMessageList: ObservableObject {
         }
     }
 
-    @Published var activeMessage: Message? = nil
+    var activeMessage: Message? = nil
 
     /// Ordered list of messages added to the list. Updated by public calls to add new elements or refresh the timers on existing
     /// ones. Automatically removes expired messages based on `endTime`.

@@ -5,22 +5,6 @@ Abstract:
 Top-level View for the Object Capture portion where shots are taken.
 */
 
-/**
- *  \file   CapturePrimaryView.swift
- *
- *   This top-level view handles showing the
- *   info panel and other items during this capture, as well as toggling
- *   the overlay display correctly. Invariant: the `ObjectCaptureSession`
- *   state should exist for the lifetime of this view; when finished,
- *   capture and leave this view to reclaim free resources
- *   for the reconstruction phase.
- *
- *  \author Video Engineering
- *
- *  Copyright (c) 2022 Apple Inc. All rights reserved.
- */
-
-import Foundation
 import RealityKit
 import SwiftUI
 import os
@@ -28,7 +12,7 @@ import os
 private let logger = Logger(subsystem: GuidedCaptureSampleApp.subsystem, category: "CapturePrimaryView")
 
 struct CapturePrimaryView: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     var session: ObjectCaptureSession
 
     var body: some View {

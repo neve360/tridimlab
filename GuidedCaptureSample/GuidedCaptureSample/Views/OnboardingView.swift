@@ -5,7 +5,6 @@ Abstract:
 The view that shows the guidance text and tutorials on the review screen.
 */
 
-import Foundation
 import RealityKit
 import SwiftUI
 import os
@@ -14,14 +13,14 @@ private let logger = Logger(subsystem: GuidedCaptureSampleApp.subsystem, categor
 
 /// The view that shows the guidance text and tutorials on the review screen.
 struct OnboardingView: View {
-    @EnvironmentObject var appModel: AppDataModel
-    @StateObject private var stateMachine: OnboardingStateMachine
+    @Environment(AppDataModel.self) var appModel
+    private var stateMachine: OnboardingStateMachine
     @Binding private var showOnboardingView: Bool
     @State private var showShotLocations: Bool = false
     @Environment(\.colorScheme) private var colorScheme
 
     init(state: OnboardingState, showOnboardingView: Binding<Bool>) {
-        _stateMachine = StateObject(wrappedValue: OnboardingStateMachine(state))
+        stateMachine = OnboardingStateMachine(state)
         _showOnboardingView = showOnboardingView
     }
 

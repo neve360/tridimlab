@@ -5,15 +5,14 @@ Abstract:
 A view to show during the reconstruction phase, with a progress update from the outputs `AsyncSequence`, until the model output is completed.
 */
 
-import Foundation
 import RealityKit
 import SwiftUI
 import os
 
-private let logger = Logger(subsystem: GuidedCaptureSampleApp.subsystem, category: "ReconstructionView")
+private let logger = Logger(subsystem: GuidedCaptureSampleApp.subsystem, category: "ReconstructionPrimaryView")
 
 struct ReconstructionPrimaryView: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     let outputFile: URL
 
     @State private var completed: Bool = false
@@ -36,7 +35,7 @@ struct ReconstructionPrimaryView: View {
 }
 
 struct ReconstructionProgressView: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     let outputFile: URL
     @Binding var completed: Bool
     @Binding var cancelled: Bool
@@ -160,12 +159,12 @@ struct ReconstructionProgressView: View {
                     case .invalidSample(id: _, reason: _), .skippedSample(id: _), .automaticDownsampling:
                         continue
                     case .stitchingIncomplete:
-                        print("stitchingIncomplete")
+                        logger.log("stitchingIncomplete")
                     @unknown default:
                         logger.warning("Received an unknown output: \(String(describing: output))")
                     }
             }
-            print(">>>>>>>>>> RECONSTRUCTION TASK EXIT >>>>>>>>>>>>>>>>>")
+            logger.log("Reconstruction task exit")
         }  // task
     }
 

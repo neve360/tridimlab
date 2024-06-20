@@ -25,7 +25,9 @@ struct PlayerView: UIViewRepresentable {
     func makeUIView(context: Context) -> AVPlayerView {
         let playerView = AVPlayerView()
         let playerItem = AVPlayerItem(url: url)
-        playerItem.videoComposition = createVideoComposition(for: playerItem)
+
+        applyVideoComposition(for: playerItem)
+
         let player = AVQueuePlayer(playerItem: playerItem)
         player.actionAtItemEnd = .pause
         playerView.player = player
@@ -42,18 +44,16 @@ struct PlayerView: UIViewRepresentable {
         let currentItemUrl: URL? = (playerView.player?.currentItem?.asset as? AVURLAsset)?.url
         if currentItemUrl != url {
             let playerItem = AVPlayerItem(url: url)
-            playerItem.videoComposition = createVideoComposition(for: playerItem)
+
+            applyVideoComposition(for: playerItem)
+
             playerView.player?.replaceCurrentItem(with: playerItem)
         }
         playerView.player?.play()
     }
 
-    private func createVideoComposition(for playerItem: AVPlayerItem) -> AVVideoComposition {
-        guard let videoSize = playerItem.asset.videoSize else {
-            return AVVideoComposition()
-        }
-
-        let composition = AVMutableVideoComposition(asset: playerItem.asset, applyingCIFiltersWithHandler: { request in
+    private func applyVideoComposition(for playerItem: AVPlayerItem) {
+        AVMutableVideoComposition.videoComposition(with: playerItem.asset, applyingCIFiltersWithHandler: { request in
             guard let filter = CIFilter(name: "CIMaskToAlpha") else {
                 return
             }
@@ -71,10 +71,28 @@ struct PlayerView: UIViewRepresentable {
             }
 
             return request.finish(with: outputImage, context: nil)
-        })
+        }, completionHandler: { composition, error in
+            playerItem.asset.loadTracks(withMediaType: .video) { tracks, error in
+                Task {
+                    if let tracks {
+                        var videoSize: CGSize?
 
-        composition.renderSize = videoSize
-        return composition
+                        for track in tracks {
+                            let naturalSize = try await track.load(.naturalSize)
+                            let preferredTransform = try await track.load(.preferredTransform)
+
+                            videoSize = !tracks.isEmpty ? naturalSize.applying(preferredTransform) : nil
+                        }
+
+                        if let composition,
+                           let videoSize {
+                            composition.renderSize = videoSize
+                            playerItem.videoComposition = composition
+                        }
+                    }
+                }
+            }
+        })
     }
 }
 
@@ -90,13 +108,5 @@ class AVPlayerView: UIView {
     var player: AVPlayer? {
         get { playerLayer?.player }
         set { playerLayer?.player = newValue }
-    }
-}
-
-extension AVAsset {
-    var videoSize: CGSize? {
-        tracks(withMediaType: .video).first.flatMap {
-            !tracks.isEmpty ? $0.naturalSize.applying($0.preferredTransform) : nil
-        }
     }
 }

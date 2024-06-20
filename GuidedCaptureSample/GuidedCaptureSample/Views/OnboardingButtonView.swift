@@ -13,9 +13,9 @@ private let logger = Logger(subsystem: GuidedCaptureSampleApp.subsystem, categor
 
 /// The view that creates the buttons on the review screen, depending on `currentState` in `onboardingStateMachine`.
 struct OnboardingButtonView: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     var session: ObjectCaptureSession
-    @ObservedObject var onboardingStateMachine: OnboardingStateMachine
+    var onboardingStateMachine: OnboardingStateMachine
     @Binding var showOnboardingView: Bool
     @Binding var showShotLocations: Bool
 
@@ -149,7 +149,7 @@ struct OnboardingButtonView: View {
 }
 
 private struct CreateButton: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     let buttonLabel: String
     var buttonLabelColor: Color = Color.white
     var buttonBackgroundColor: Color = Color.blue
@@ -181,6 +181,7 @@ private struct CreateButton: View {
                         .bold()
                         .foregroundColor(buttonLabelColor)
                         .padding(16)
+                        .frame(maxWidth: shouldApplyBackground ? .infinity : nil)
                 }
             })
         .frame(maxWidth: .infinity)
@@ -195,7 +196,7 @@ private struct CreateButton: View {
 }
 
 private struct CancelButton: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     let buttonLabel: String
     @Binding var showOnboardingView: Bool
 

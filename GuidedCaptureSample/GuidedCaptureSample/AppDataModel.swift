@@ -3,11 +3,9 @@ See the LICENSE.txt file for this sample’s licensing information.
 
 Abstract:
 A data model for maintaining the app state, including the underlying object capture state as well as any extra app state
- we maintainin addition, perhaps with invariants between them.
+ you maintain in addition, perhaps with invariants between them.
 */
 
-import Combine
-import Foundation
 import RealityKit
 import SwiftUI
 import os
@@ -16,11 +14,12 @@ private let logger = Logger(subsystem: GuidedCaptureSampleApp.subsystem,
                             category: "AppDataModel")
 
 @MainActor
-class AppDataModel: ObservableObject, Identifiable {
+@Observable
+class AppDataModel: Identifiable {
     static let instance = AppDataModel()
 
     /// When we start the capture phase, this will be set to the correct locations in the captureFolderManager.
-    @Published var objectCaptureSession: ObjectCaptureSession? {
+    var objectCaptureSession: ObjectCaptureSession? {
         willSet {
             detachListeners()
         }
@@ -41,7 +40,7 @@ class AppDataModel: ObservableObject, Identifiable {
     /// Shows whether the user decided to skip reconstruction.
     private(set) var isSaveDraftEnabled = false
 
-    @Published var messageList = TimedMessageList()
+    var messageList = TimedMessageList()
 
     enum ModelState {
         case notSet
@@ -55,15 +54,15 @@ class AppDataModel: ObservableObject, Identifiable {
         case failed
     }
 
-    @Published var state: ModelState = .notSet {
+    var state: ModelState = .notSet {
         didSet {
             logger.debug("didSet AppDataModel.state to \(String(describing: self.state))")
             performStateTransition(from: oldValue, to: state)
         }
     }
 
-    @Published var orbit: Orbit = .orbit1
-    @Published var isObjectFlipped: Bool = false
+    var orbit: Orbit = .orbit1
+    var isObjectFlipped: Bool = false
 
     var hasIndicatedObjectCannotBeFlipped: Bool = false
     var hasIndicatedFlipObjectAnyway: Bool = false
@@ -81,20 +80,19 @@ class AppDataModel: ObservableObject, Identifiable {
         case area
     }
 
-    @Published var captureMode: CaptureMode = .object
-
-    // Should be set to true when there is a startCapture call in flight, and reset whenever
-    // we go back to a new capture.
-    @Published var startCaptureTriggered: Bool = false
+    var captureMode: CaptureMode = .object
 
     // When state moves to failed, this is the error causing it.
     private(set) var error: Swift.Error?
 
-    // Use setShowOverlaySheets(to:) to change this so we can maintain ObjectCaptureSession's pause state
-    // properly since we don't hide the ObjectCaptureView which would pause it for us.
-    @Published private(set) var showOverlaySheets = false
+    // Use setShowOverlaySheets(to:) to change this so you can maintain ObjectCaptureSession's pause state
+    // properly because you don't hide the ObjectCaptureView. If you hide the ObjectCaptureView it pauses automatically.
+    private(set) var showOverlaySheets = false
 
-    // Postpone creating ObjectCaptureSession and PhotogrammetrySession until we need them.
+    // Shows whether the tutorial has played once during a session.
+    var tutorialPlayedOnce = false
+
+    // Postpone creating ObjectCaptureSession and PhotogrammetrySession until necessary.
     private init() {
         state = .ready
         NotificationCenter.default.addObserver(self,
@@ -268,7 +266,7 @@ extension AppDataModel {
         captureMode = .object
         state = .ready
         isSaveDraftEnabled = false
-        startCaptureTriggered = false
+        tutorialPlayedOnce = false
     }
 
     private func onStateChanged(newState: ObjectCaptureSession.CaptureState) {
@@ -349,7 +347,7 @@ extension AppDataModel {
         }
     }
 
-    func removeCheckpointFolder() {
+    private func removeCheckpointFolder() {
         // Remove checkpoint folder to free up space now that the model is generated.
         if let captureFolderManager {
             DispatchQueue.global(qos: .background).async {
@@ -379,18 +377,5 @@ extension AppDataModel {
             case .area:
                 return .captureInAreaMode
         }
-    }
-
-    var tutorialURL: URL? {
-        let interfaceIdiom = UIDevice.current.userInterfaceIdiom
-        var videoName: String? = nil
-        switch captureMode {
-        case .area:
-            videoName = interfaceIdiom == .pad ? "ScanTutorial-iPad-Area" : "ScanTutorial-iPhone-Area"
-        case .object:
-            videoName = interfaceIdiom == .pad ? "ScanPasses-iPad-FixedHeight-1" : "ScanPasses-iPhone-FixedHeight-1"
-        }
-        guard let videoName else { return nil }
-        return Bundle.main.url(forResource: videoName, withExtension: "mp4")
     }
 }

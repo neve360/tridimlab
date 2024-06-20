@@ -5,16 +5,15 @@ Abstract:
 The guidance view that shows the video tutorial or the point cloud on the review screen.
 */
 
-import Foundation
 import RealityKit
 import SwiftUI
 
 /// The view that either shows the point cloud or plays the guidance tutorials on the review screens, depending on
 /// `currentState` in `onboardingStateMachine`.
 struct OnboardingTutorialView: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     var session: ObjectCaptureSession
-    @ObservedObject var onboardingStateMachine: OnboardingStateMachine
+    var onboardingStateMachine: OnboardingStateMachine
     @Binding var showShotLocations: Bool
     var viewSize: CGSize
 

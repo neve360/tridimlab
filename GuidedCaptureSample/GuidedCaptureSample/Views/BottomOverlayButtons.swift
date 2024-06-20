@@ -5,20 +5,18 @@ Abstract:
 Bottom overlay button implementation for capture overlay view.
 */
 
-import SwiftUI
 import RealityKit
-import AVFoundation
+import SwiftUI
 import os
 
-private let logger = Logger(subsystem: GuidedCaptureSampleApp.subsystem, category: "BottomOverlayViews")
+private let logger = Logger(subsystem: GuidedCaptureSampleApp.subsystem, category: "BottomOverlayButtons")
 
-struct BottomOverlayButtons: View {
-    @EnvironmentObject var appModel: AppDataModel
+struct BottomOverlayButtons: View, OverlayButtons {
+    @Environment(AppDataModel.self) var appModel
     var session: ObjectCaptureSession
     @Binding var hasDetectionFailed: Bool
     @Binding var showCaptureModeGuidance: Bool
     @Binding var showTutorialView: Bool
-    var capturingStarted: Bool
     var rotationAngle: Angle
 
     var body: some View {
@@ -38,20 +36,21 @@ struct BottomOverlayButtons: View {
             }
             .frame(maxWidth: .infinity)
 
-            if !capturingStarted {
+            if !isCapturingStarted(state: session.state) {
                 CaptureButton(session: session,
                               hasDetectionFailed: $hasDetectionFailed,
                               showTutorialView: $showTutorialView)
                     .frame(width: 200)
-                    .disabled(appModel.startCaptureTriggered)
             }
 
             HStack {
                 switch session.state {
                     case .ready:
+                    if appModel.orbit == .orbit1 {
                         CaptureModeButton(session: session,
                                           showCaptureModeGuidance: $showCaptureModeGuidance)
                             .frame(width: 30)
+                    }
                     case .detecting:
                         AutoDetectionStateView(session: session)
                     default:
@@ -70,7 +69,7 @@ struct BottomOverlayButtons: View {
 
 @MainActor
 private struct CaptureButton: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     var session: ObjectCaptureSession
     @Binding var hasDetectionFailed: Bool
     @Binding var showTutorialView: Bool
@@ -112,37 +111,12 @@ private struct CaptureButton: View {
     private func performAction() {
         if session.state == .ready {
             switch appModel.captureMode {
-                case .object:
-                    hasDetectionFailed = !(session.startDetecting())
-                case .area:
-                    Task {
-                        // Start the tutorial video.
-                        withAnimation {
-                            showTutorialView = true
-                        }
-
-                        // Delay starting the capture until the tutorial video finishes playing.
-                        var animationDuration: Double?
-                        if let url = appModel.tutorialURL {
-                            animationDuration = try? await AVURLAsset(url: url).load(.duration).seconds - reducedTutorialAnimationTime
-                        }
-
-                        // You can't call `startCapturing()` twice, so guard that only one call is in flight.
-                        if !appModel.startCaptureTriggered {
-                            appModel.startCaptureTriggered = true
-                            DispatchQueue.main.asyncAfter(deadline: .now() + (animationDuration ?? 0.0)) {
-                                session.startCapturing()
-                            }
-                        }
-                    }
+            case .object:
+                hasDetectionFailed = !(session.startDetecting())
+            case .area:
+                session.startCapturing()
             }
         } else if case .detecting = session.state {
-            // Show the tutorial in the first scan pass only.
-            if appModel.orbit == .orbit1 {
-                withAnimation {
-                    showTutorialView = true
-                }
-            }
             session.startCapturing()
         }
     }
@@ -188,7 +162,7 @@ private struct AutoDetectionStateView: View {
 }
 
 private struct ResetBoundingBoxButton: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     var session: ObjectCaptureSession
 
     var body: some View {
@@ -244,7 +218,7 @@ private struct ManualShotButton: View {
 }
 
 private struct HelpButton: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     @State private var showHelpPageView: Bool = false
 
     var body: some View {
@@ -282,7 +256,7 @@ private struct HelpButton: View {
 }
 
 private struct CaptureModeButton: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     var session: ObjectCaptureSession
     @Binding var showCaptureModeGuidance: Bool
     @State private var captureModeGuidanceTimer: Timer? = nil

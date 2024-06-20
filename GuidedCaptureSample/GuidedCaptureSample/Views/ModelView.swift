@@ -7,7 +7,6 @@ A wrapper for AR QuickLook viewer that lets you view the reconstructed USDZ mode
 
 import QuickLook
 import SwiftUI
-import UIKit
 import os
 
 private let logger = Logger(subsystem: GuidedCaptureSampleApp.subsystem, category: "ModelView")

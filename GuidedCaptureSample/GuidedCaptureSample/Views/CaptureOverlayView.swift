@@ -6,19 +6,20 @@ Full-screen overlay UI with buttons to control the capture, intended to placed i
 */
 
 import AVFoundation
-import Foundation
 import RealityKit
 import SwiftUI
 import os
-import UniformTypeIdentifiers
 
 private let logger = Logger(subsystem: GuidedCaptureSampleApp.subsystem, category: "CaptureOverlayView")
-internal let reducedTutorialAnimationTime: TimeInterval = 2.0
 
 struct CaptureOverlayView: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     var session: ObjectCaptureSession
 
+    // Reads persistently from the System settings where users can toggle it on/off once they
+    // no longer feel they need it.
+    @AppStorage("show_tutorials") var areTutorialsEnabledInUserSettings: Bool = true
+    
     @State private var showCaptureModeGuidance: Bool = false
     @State private var hasDetectionFailed = false
     @State private var showTutorialView = false
@@ -26,12 +27,11 @@ struct CaptureOverlayView: View {
 
     var body: some View {
         ZStack {
-            if showTutorialView, let url = appModel.tutorialURL {
+            if areTutorialsEnabledInUserSettings, showTutorialView, let url = tutorialURL {
                 TutorialView(url: url, showTutorialView: $showTutorialView)
             } else {
                 VStack(spacing: 20) {
                     TopOverlayButtons(session: session,
-                                      capturingStarted: capturingStarted,
                                       showCaptureModeGuidance: showCaptureModeGuidance)
 
                     Spacer()
@@ -42,7 +42,6 @@ struct CaptureOverlayView: View {
                                          hasDetectionFailed: $hasDetectionFailed,
                                          showCaptureModeGuidance: $showCaptureModeGuidance,
                                          showTutorialView: $showTutorialView,
-                                         capturingStarted: capturingStarted,
                                          rotationAngle: rotationAngle)
                 }
                 .padding()
@@ -66,16 +65,34 @@ struct CaptureOverlayView: View {
             }
         }
         // When camera tracking isn't normal, display the AR coaching view and hide the overlay view.
-        .opacity(session.cameraTracking == .normal && !session.isPaused ? 1.0 : 0.0 )
+        .opacity(shouldShowOverlayView ? 1.0 : 0.0)
+        .onChange(of: session.state) {
+            if !appModel.tutorialPlayedOnce, session.state == .capturing {
+                // Start the tutorial video which will pause the capture while visible.
+                withAnimation {
+                    logger.log("Setting showTutorialView to true")
+                    showTutorialView = true
+                }
+                appModel.tutorialPlayedOnce = true
+            }
+        }
     }
 
-    private var capturingStarted: Bool {
-        switch session.state {
-            case .initializing, .ready, .detecting:
-                return false
-            default:
-                return true
+    private var shouldShowOverlayView: Bool {
+        return showTutorialView || (session.cameraTracking == .normal && !session.isPaused)
+    }
+
+    private var tutorialURL: URL? {
+        let interfaceIdiom = UIDevice.current.userInterfaceIdiom
+        var videoName: String? = nil
+        switch appModel.captureMode {
+        case .area:
+            videoName = interfaceIdiom == .pad ? "ScanTutorial-iPad-Area" : "ScanTutorial-iPhone-Area"
+        case .object:
+            videoName = interfaceIdiom == .pad ? "ScanPasses-iPad-FixedHeight-1" : "ScanPasses-iPhone-FixedHeight-1"
         }
+        guard let videoName = videoName else { return nil }
+        return Bundle.main.url(forResource: videoName, withExtension: "mp4")
     }
 
     private var rotationAngle: Angle {
@@ -93,13 +110,18 @@ struct CaptureOverlayView: View {
 }
 
 private struct TutorialView: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     var url: URL
     @Binding var showTutorialView: Bool
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var isVisible = false
+    
+    /// How long to delay the animation start once the tutorial view is dimmed.
     private let delay: TimeInterval = 0.3
+    
+    /// How much of the end of the animation to trim off.
+    private let reducedTutorialAnimationTime: TimeInterval = 2.0
 
     var body: some View {
         VStack {
@@ -120,18 +142,27 @@ private struct TutorialView: View {
         .background(Color.black.opacity(0.5))
         .allowsHitTesting(false)
         .onAppear {
+            // Let the screen dim before the animation tutorial plays.
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                // Pause the capture session while the tutorial plays to reduce visual clutter
+                // and avoid taking shots while the screen is covered.
+                logger.log("Tutorial onAppear() is pausing the session...")
+                appModel.objectCaptureSession?.pause()
+
                 withAnimation {
                     isVisible = true
                 }
             }
         }
+        .onDisappear {
+            // Resume the capture session once the tutorial is done.
+            logger.log("Tutorial onDisappear() is resuming the session...")
+            appModel.objectCaptureSession?.resume()
+        }
         .task {
             let animationDuration = try? await AVURLAsset(url: url).load(.duration).seconds - reducedTutorialAnimationTime
             DispatchQueue.main.asyncAfter(deadline: .now() + (animationDuration ?? 0.0)) {
-                withAnimation {
-                    showTutorialView = false
-                }
+                showTutorialView = false
             }
         }
     }
@@ -146,9 +177,8 @@ private struct TutorialView: View {
     }
 }
 
-@MainActor
 private struct BoundingBoxGuidanceView: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     var session: ObjectCaptureSession
     var hasDetectionFailed: Bool
 
@@ -200,6 +230,21 @@ private struct BoundingBoxGuidanceView: View {
                 comment: "Feedback message to resize the box to the object.")
         } else {
             return nil
+        }
+    }
+}
+
+protocol OverlayButtons {
+    func isCapturingStarted(state: ObjectCaptureSession.CaptureState) -> Bool
+}
+
+extension OverlayButtons {
+    func isCapturingStarted(state: ObjectCaptureSession.CaptureState) -> Bool {
+        switch state {
+            case .initializing, .ready, .detecting:
+                return false
+            default:
+                return true
         }
     }
 }

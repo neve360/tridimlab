@@ -8,14 +8,15 @@ The state machine owned by OnboardingView. It is used to transition between the 
 import Foundation
 import os
 
-private let logger = Logger(subsystem: "com.apple.ObjectCapture", category: "OnboardingView")
+private let logger = Logger(subsystem: GuidedCaptureSampleApp.subsystem, category: "OnboardingStateMachine")
 
 /// OnboardingStateMachine is a state machine used by OnboardingView to show the tutorial and texts depending on its `currentState`.
 /// The state transitions happen based on the user inputs in OnboardingButtonView.
-class OnboardingStateMachine: ObservableObject {
-    @Published var currentState: OnboardingState {
+@Observable
+class OnboardingStateMachine {
+    var currentState: OnboardingState {
         didSet {
-            logger.log(">>>>> Onboarding state transition \(String(describing: oldValue))->\(String(describing: self.currentState))")
+            logger.log("Onboarding state transition \(String(describing: oldValue))->\(String(describing: self.currentState))")
         }
     }
 

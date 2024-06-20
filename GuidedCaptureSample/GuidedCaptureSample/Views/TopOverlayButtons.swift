@@ -5,16 +5,15 @@ Abstract:
 Top overlay button implementation for the capture overlay view.
 */
 
-import SwiftUI
 import RealityKit
+import SwiftUI
 import os
 
 private let logger = Logger(subsystem: GuidedCaptureSampleApp.subsystem, category: "TopOverlayButtons")
 
-struct TopOverlayButtons: View {
-    @EnvironmentObject var appModel: AppDataModel
+struct TopOverlayButtons: View, OverlayButtons {
+    @Environment(AppDataModel.self) var appModel
     var session: ObjectCaptureSession
-    var capturingStarted: Bool
     var showCaptureModeGuidance: Bool
 
     var body: some View {
@@ -22,7 +21,7 @@ struct TopOverlayButtons: View {
             HStack {
                 CaptureCancelButton()
                 Spacer()
-                if capturingStarted {
+                if isCapturingStarted(state: session.state) {
                     NextButton(session: session)
                 } else {
                     CaptureFolderButton()
@@ -38,7 +37,7 @@ struct TopOverlayButtons: View {
 }
 
 private struct CaptureCancelButton: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
 
     var body: some View {
         Button(action: {
@@ -61,7 +60,7 @@ private struct CaptureCancelButton: View {
 }
 
 private struct NextButton: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     var session: ObjectCaptureSession
     @State private var showOnboardingView: Bool = false
 
@@ -110,7 +109,7 @@ private struct NextButton: View {
 }
 
 private struct CaptureFolderButton: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     @State private var showCaptureFolders: Bool = false
 
     var body: some View {
@@ -137,7 +136,7 @@ private struct CaptureFolderButton: View {
 }
 
 private struct CaptureModeGuidanceView: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
 
     var body: some View {
         Text(guidanceText)
@@ -188,7 +187,7 @@ private struct VisualEffectRoundedCorner: ViewModifier {
 }
 
 private struct GalleryView: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     @Binding var showCaptureFolders: Bool
 
     var body: some View {

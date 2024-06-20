@@ -5,13 +5,12 @@ Abstract:
 A class that generates human-readable strings for each Feedback state.
 */
 
-import Foundation
 import RealityKit
 import SwiftUI
 
 /// Keeps the UI string conversions all in one place for simplicity
 final class FeedbackMessages {
-    /// Returns the human readable string to display for the given feedback.  If there are more than one feedback entry, they
+    /// Returns the human readable string to display for the given feedback.  If there are more than one feedback entries, they
     /// will be concatenated together on multi-lines ('\n\ separated).
     static func getFeedbackString(for feedback: ObjectCaptureSession.Feedback, captureMode: AppDataModel.CaptureMode) -> String? {
            switch feedback {

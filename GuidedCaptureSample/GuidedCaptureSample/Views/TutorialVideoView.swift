@@ -8,7 +8,7 @@ The view for playing the tutorial.
 import SwiftUI
 
 struct TutorialVideoView: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
     let url: URL
     let isInReviewSheet: Bool
 

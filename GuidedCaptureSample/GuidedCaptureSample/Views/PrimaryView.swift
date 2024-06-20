@@ -12,7 +12,7 @@ import os
 private let logger = Logger(subsystem: GuidedCaptureSampleApp.subsystem, category: "PrimaryView")
 
 struct PrimaryView: View {
-    @EnvironmentObject var appModel: AppDataModel
+    @Environment(AppDataModel.self) var appModel
 
     @State private var showReconstructionView: Bool = false
     @State private var showErrorAlert: Bool = false

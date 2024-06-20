@@ -9,7 +9,6 @@ Implementation for UntilProcessingCompleteFilter that iterates the session outpu
 // all Output messages until it receives a `.processingComplete` (or `.processingCancelled`). This allows the infinite stream
 // to be monitored within a Task only until the current `process()` call is complete, so the filtered stream will be finite.
 
-import Foundation
 import RealityKit
 
 struct UntilProcessingCompleteFilter<Base>: AsyncSequence, AsyncIteratorProtocol

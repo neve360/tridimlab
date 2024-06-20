@@ -5,8 +5,6 @@ Abstract:
 A view for displaying the feedback messages for scanning.
 */
 
-import Foundation
-import RealityKit
 import SwiftUI
 import os
 
@@ -14,7 +12,7 @@ private let logger = Logger(subsystem: GuidedCaptureSampleApp.subsystem,
                             category: "FeedbackView")
 
 struct FeedbackView: View {
-    @ObservedObject var messageList: TimedMessageList
+    var messageList: TimedMessageList
 
     var body: some View {
         VStack {
