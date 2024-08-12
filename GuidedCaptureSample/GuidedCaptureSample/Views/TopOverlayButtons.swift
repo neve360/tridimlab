@@ -210,8 +210,9 @@ private struct GalleryView: View {
                 Divider().padding(.vertical, 8)
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()),
                                          count: UIDevice.current.userInterfaceIdiom == .pad ? 5 : 3)) {
+                    let frameWidth = UIDevice.current.userInterfaceIdiom == .pad ? 100 : 115
                     ForEach(captureFolderURLs, id: \.self) { url in
-                        ThumbnailView(captureFolderURL: url)
+                        ThumbnailView(captureFolderURL: url, frameSize: CGSize(width: frameWidth, height: frameWidth + 70))
                     }
                 }
             }.padding()
@@ -247,25 +248,25 @@ private struct GalleryView: View {
 
 private struct ThumbnailView: View {
     let captureFolderURL: URL
-    @State private var image: UIImage?
+    let frameSize: CGSize
+    @State private var image: CGImage?
 
     var body: some View {
         if let imageURL = getFirstImage(from: captureFolderURL) {
             ShareLink(item: captureFolderURL) {
-                let frameSize: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 100 : 115
                 VStack(spacing: 8) {
                     VStack {
                         if let image {
-                            Image(uiImage: image)
+                            Image(decorative: image, scale: 1.0)
                                 .resizable()
-                                .aspectRatio(contentMode: .fill)
+                                .scaledToFill()
                         } else {
                             ProgressView()
                         }
                     }
-                    .frame(width: frameSize, height: frameSize)
+                    .frame(width: frameSize.width, height: frameSize.width)
                     .clipped()
-                    .cornerRadius(8)
+                    .cornerRadius(6)
 
                     let folderName = captureFolderURL.lastPathComponent
                     Text("\(folderName)")
@@ -273,26 +274,24 @@ private struct ThumbnailView: View {
                         .font(.caption2)
                     Spacer()
                 }
-                .frame(width: frameSize, height: frameSize + 70)
+                .frame(width: frameSize.width, height: frameSize.height)
                 .task {
-                    image = await loadThumbnail(url: imageURL)
+                    image = await createThumbnail(url: imageURL)
                 }
             }
         }
     }
 
-    nonisolated private func loadThumbnail(url: URL) async -> UIImage? {
-        // Load the embedded thumbnail.
-        let maxPixelSize = 200
-        let options: [CFString: Any] = [kCGImageSourceThumbnailMaxPixelSize: maxPixelSize]
-
-        if let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil),
-           let cgImage = CGImageSourceCreateThumbnailAtIndex(imageSource, 0, options as CFDictionary) {
-            return UIImage(cgImage: cgImage, scale: 1.0, orientation: .right)
-        } else { // If embedded thumbnail is not available, load the image.
-            let uiImage = UIImage(contentsOfFile: url.path())
-            return await uiImage?.byPreparingThumbnail(ofSize: CGSize(width: maxPixelSize, height: maxPixelSize))
+    private nonisolated func createThumbnail(url: URL) async -> CGImage? {
+        let options = [
+            kCGImageSourceThumbnailMaxPixelSize: frameSize.width * 2,
+            kCGImageSourceCreateThumbnailFromImageIfAbsent: true,
+            kCGImageSourceCreateThumbnailWithTransform: true] as CFDictionary
+        guard let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil),
+              let thumbnail = CGImageSourceCreateThumbnailAtIndex(imageSource, 0, options) else {
+            return nil
         }
+        return thumbnail
     }
 
     private func getFirstImage(from url: URL) -> URL? {

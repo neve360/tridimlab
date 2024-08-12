@@ -92,9 +92,9 @@ private struct CaptureTypesHelpPageView: View {
         )
 
         static let caption = NSLocalizedString(
-            "Choose which capture type suits your object.\n (Help, Object Capture)",
+            "Choose which capture type suits your object. (Help, Object Capture)",
             bundle: Bundle.main,
-            value: "Choose which capture type suits your object.\n",
+            value: "Choose which capture type suits your object.",
             comment: "Caption for the Capture Types page on the object Capture Help screen."
         )
 
@@ -168,9 +168,9 @@ private struct HowToCaptureHelpPageView: View {
             comment: "Title of the How to Capture page on the object Capture Help screen.")
 
         static let caption = NSLocalizedString(
-            "Move slowly around your object to capture all sides.\n (Help, Object Capture)",
+            "Move slowly around your object to capture all sides. (Help, Object Capture)",
             bundle: Bundle.main,
-            value: "Move slowly around your object to capture all sides.\n",
+            value: "Move slowly around your object to capture all sides.",
             comment: "Caption of the How to Capture page in the object Capture Help screen."
         )
 
@@ -248,9 +248,9 @@ private struct SupportedObjectHelpPageView: View {
         )
 
         static let caption = NSLocalizedString(
-            "Opaque, matte objects with varied surface textures scan best.\n (Help, Object Capture)",
+            "Opaque, matte objects with varied surface textures scan best. (Help, Object Capture)",
             bundle: Bundle.main,
-            value: "Opaque, matte objects with varied surface textures scan best.\n",
+            value: "Opaque, matte objects with varied surface textures scan best.",
             comment: "Caption for the Supported Objects page on the object Capture Help screen."
         )
 
@@ -334,9 +334,9 @@ private struct EnvironmentHelpPageView: View {
         )
 
         static let caption = NSLocalizedString(
-            "Make sure you have even, bright lighting and a stable environment for scanning.\n (Help, Object Capture)",
+            "Make sure you have even, bright lighting and a stable environment for scanning. (Help, Object Capture)",
             bundle: Bundle.main,
-            value: "Make sure you have even, bright lighting and a stable environment for scanning.\n",
+            value: "Make sure you have even, bright lighting and a stable environment for scanning.",
             comment: "Caption for the Environment page on the object Capture Help screen."
         )
 
