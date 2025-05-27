@@ -1,0 +1,56 @@
+name: Build IPA
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Build .xcarchive
+      run: |
+        xcodebuild -project TridimLab.xcodeproj \
+          -scheme TridimLab \
+          -configuration Release \
+          -archivePath $PWD/build/TridimLab.xcarchive \
+          archive
+
+    - name: Export .ipa
+      run: |
+        cat > ExportOptions.plist <<EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+          <key>method</key>
+          <string>ad-hoc</string>
+          <key>compileBitcode</key>
+          <false/>
+          <key>destination</key>
+          <string>export</string>
+          <key>signingStyle</key>
+          <string>automatic</string>
+          <key>stripSwiftSymbols</key>
+          <true/>
+          <key>thinning</key>
+          <string>&lt;none&gt;</string>
+        </dict>
+        </plist>
+        EOF
+
+        xcodebuild -exportArchive \
+          -archivePath $PWD/build/TridimLab.xcarchive \
+          -exportOptionsPlist ExportOptions.plist \
+          -exportPath $PWD/build
+
+    - name: Upload IPA
+      uses: actions/upload-artifact@v3
+      with:
+        name: TridimLab.ipa
+        path: build/*.ipa
